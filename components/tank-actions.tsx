@@ -55,15 +55,15 @@ export function TankActions({ tankId, batchId }: Props) {
 
     if (!navigator.onLine) {
       await enqueue({
-        type: "insert",
-        table: "analysis_reading",
-        payload: {
-          batch_id: batchId,
-          tank_id: tankId,
-          parameter_id: density.id,
-          value_num: Number(analysisValue)
-        }
-      });
+  type: "insert",
+  table: "analysis_reading",
+  payload: {
+    batch_id: batchId,
+    tank_id: tankId,
+    parameter_id: density.id,
+    value_num: Number(analysisValue),
+  } as Record<string, unknown>,
+} as any);
       await refreshPending();
       return setMsg("Analise guardada offline.");
     }
