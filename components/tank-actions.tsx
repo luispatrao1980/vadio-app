@@ -126,11 +126,11 @@ export function TankActions({ tankId, batchId }: Props) {
     const supabase = createClient();
 
     if (!navigator.onLine) {
-      await enqueue({ type: "insert", table: "haccp_cleaning", payload });
-      await refreshPending();
-      return setMsg("HACCP guardado offline.");
-    }
-
+    await enqueue({
+  type: "insert",
+  table: "haccp_cleaning",
+  payload: payload as Record<string, unknown>,
+} as any);
     const { error } = await supabase.from("haccp_cleaning").insert(payload);
     if (error) return setMsg(error.message);
     setMsg("HACCP registado.");
