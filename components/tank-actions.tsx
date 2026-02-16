@@ -12,26 +12,32 @@ type Props = {
 
 async function runRpcOrQueue(fn: string, args: Record<string, unknown>) {
   const supabase = createClient();
+
   if (!navigator.onLine) {
-await enqueue({
-  type: "rpc",
-  fn,
-  args: args as Record<string, unknown>,
-} as any);
+    await enqueue({
+      type: "rpc",
+      fn,
+      args: args as Record<string, unknown>,
+    } as any);
+
     return { queued: true };
   }
+
   const { error } = await supabase.rpc(fn, args);
+
   if (error) {
     if (error.message.toLowerCase().includes("network")) {
-await enqueue({
-  type: "rpc",
-  fn,
-  args: args as Record<string, unknown>
-} as any);
+      await enqueue({
+        type: "rpc",
+        fn,
+        args: args as Record<string, unknown>,
+      } as any);
+
       return { queued: true };
     }
     throw error;
   }
+
   return { queued: false };
 }
 
@@ -50,20 +56,26 @@ export function TankActions({ tankId, batchId }: Props) {
     if (!batchId) return setMsg("Sem lote ativo.");
 
     const supabase = createClient();
-    const { data: density } = await supabase.from("analysis_parameter").select("id").eq("code", "density").single();
+    const { data: density } = await supabase
+      .from("analysis_parameter")
+      .select("id")
+      .eq("code", "density")
+      .single();
+
     if (!density?.id) return setMsg("Parametro density nao encontrado.");
 
     if (!navigator.onLine) {
       await enqueue({
-  type: "insert",
-  table: "analysis_reading",
-  payload: {
-    batch_id: batchId,
-    tank_id: tankId,
-    parameter_id: density.id,
-    value_num: Number(analysisValue),
-  } as Record<string, unknown>,
-} as any);
+        type: "insert",
+        table: "analysis_reading",
+        payload: {
+          batch_id: batchId,
+          tank_id: tankId,
+          parameter_id: density.id,
+          value_num: Number(analysisValue),
+        } as Record<string, unknown>,
+      } as any);
+
       await refreshPending();
       return setMsg("Analise guardada offline.");
     }
@@ -72,8 +84,9 @@ export function TankActions({ tankId, batchId }: Props) {
       batch_id: batchId,
       tank_id: tankId,
       parameter_id: density.id,
-      value_num: Number(analysisValue)
+      value_num: Number(analysisValue),
     });
+
     if (error) return setMsg(error.message);
     setMsg("Analise registada.");
   }
@@ -86,7 +99,7 @@ export function TankActions({ tankId, batchId }: Props) {
         p_batch_id: batchId,
         p_to_tank_id: toTankId,
         p_new_volume_l: Number(newVolume),
-        p_loss_l: 0
+        p_loss_l: 0,
       });
       await refreshPending();
       setMsg(res.queued ? "Trasfega em fila offline." : "Trasfega registada.");
@@ -104,7 +117,7 @@ export function TankActions({ tankId, batchId }: Props) {
         p_tank_id: tankId,
         p_product_lot_id: additionLotId,
         p_qty: Number(additionQty),
-        p_uom: "kg"
+        p_uom: "kg",
       });
       await refreshPending();
       setMsg(res.queued ? "Adicao em fila offline." : "Adicao registada.");
@@ -115,24 +128,32 @@ export function TankActions({ tankId, batchId }: Props) {
 
   async function haccp(e: FormEvent) {
     e.preventDefault();
+
     const payload = {
       tank_id: tankId,
       method: haccpMethod,
       chemical: "Peracetic",
       concentration: "0.2%",
       contact_time_min: 20,
-      responsible_name: "Operator"
+      responsible_name: "Operator",
     };
+
     const supabase = createClient();
 
     if (!navigator.onLine) {
-    await enqueue({
-  type: "insert",
-  table: "haccp_cleaning",
-  payload: payload as Record<string, unknown>,
-} as any);
+      await enqueue({
+        type: "insert",
+        table: "haccp_cleaning",
+        payload: payload as Record<string, unknown>,
+      } as any);
+
+      await refreshPending();
+      return setMsg("HACCP guardado offline.");
+    }
+
     const { error } = await supabase.from("haccp_cleaning").insert(payload);
     if (error) return setMsg(error.message);
+
     setMsg("HACCP registado.");
   }
 
@@ -194,6 +215,7 @@ export function TankActions({ tankId, batchId }: Props) {
           <button type="submit">Registar limpeza</button>
         </form>
       </div>
+
       {msg ? <p>{msg}</p> : null}
     </div>
   );
