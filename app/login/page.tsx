@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -14,11 +13,19 @@ export default function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+
+    const supabase = createClient(); // <-- agora só corre no browser
+
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
     if (loginError) {
       setError(loginError.message);
       return;
     }
+
     router.push("/dashboard");
   }
 
@@ -29,11 +36,21 @@ export default function LoginPage() {
         <form onSubmit={onSubmit}>
           <div style={{ marginBottom: 8 }}>
             <label>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div style={{ marginBottom: 8 }}>
             <label>Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
           </div>
           <button type="submit">Login</button>
         </form>
