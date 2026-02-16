@@ -13,13 +13,21 @@ type Props = {
 async function runRpcOrQueue(fn: string, args: Record<string, unknown>) {
   const supabase = createClient();
   if (!navigator.onLine) {
-    await enqueue({ type: "rpc", fn, args });
+  await enqueue({
+  type: "rpc",
+  fn,
+  args: args as Record<string, unknown>
+});
     return { queued: true };
   }
   const { error } = await supabase.rpc(fn, args);
   if (error) {
     if (error.message.toLowerCase().includes("network")) {
-      await enqueue({ type: "rpc", fn, args });
+await enqueue({
+  type: "rpc",
+  fn,
+  args: args as Record<string, unknown>
+});
       return { queued: true };
     }
     throw error;
